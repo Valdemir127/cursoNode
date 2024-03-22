@@ -9,6 +9,9 @@
     .message {
         margin-top: 10px;
     }
+    .btn{
+        height: 55px;
+    }
 </style>
 </head>
 <body>
@@ -25,7 +28,7 @@
                     <a class="nav-link" href=".">Tela Inicial<span class="sr-only">(current)</span></a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="./produto">Cadastro Produtos</a>
+                    <a class="nav-link" href="../produto">Cadastro Produtos</a>
                 </li>                
                 <li class="nav-item">
                     <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>
@@ -35,7 +38,8 @@
     </nav>
 
     <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-12">
+            <h3>Cadastro de Usuários</h3>
             <form id="userForm">
                 <div class="form-group">
                     <label for="id">ID:</label>
@@ -53,27 +57,36 @@
                     <label for="password">Senha:</label>
                     <input type="password" class="form-control" id="password" placeholder="Digite sua senha">
                 </div>
-                <div class="form-group" id="buttons">
-                    <button type="button" class="btn btn-primary btn-block" id="newButton" onclick="registerUser()">Cadastrar</button>
-                    <button type="button" class="btn btn-secondary btn-block mt-2 d-none" id="saveButton" onclick="saveUser()">Salvar</button>
-                    <button type="button" class="btn btn-danger btn-block mt-2 d-none" id="cancelButton" onclick="cancelEdit()">Cancelar</button>
+                <div class="form-group row justify-content-between">
+                    <button type="button" class="btn btn-success btn-block" id="bt_newUser" onclick="registerUser()">Cadastrar</button>
+                    <button type="button" class="btn btn-success btn-block mt-2 col-3 d-none" id="bt_saveUser" onclick="saveUser()">Salvar</button>
+                    <button type="button" class="btn btn-warning btn-block mt-2 col-3 d-none" id="bt_cancel" onclick="cancelEdit()">Cancelar</button>
+                    <button type="button" class="btn btn-danger btn-block mt-2 col-3 d-none" id="bt_deleteUser" onclick="deleteUser()">Excluir</button>
                 </div>
                 <div class="message text-danger text-center" id="message"></div>
             </form>
         </div>
-        <div class="col-md-6">
+    </div>
+    <div class="row">
+        <div class="col-md-12 pt-3">
             <h3>Usuários Cadastrados</h3>
-            <ul id="userList" class="list-group">
-            </ul>
+            <ul id="userList" class="list-group"></ul>
         </div>
     </div>
 </div>
 
 <script>
-    var users = []; // Array para armazenar os usuários cadastrados
-    var userIdCounter = 1; // Contador para gerar IDs únicos para os usuários
+    const users = new Map()
 
-    function registerUser() {
+    users.set(1711137127538, {"name":"aaa","email":"aaa@aaa.com"})
+    users.set(1711137134719, {"name":"bbb","email":"bbb@bbb.com"})
+    users.set(1711137146343, {"name":"ccc","email":"ccc@ccc.com"})
+    users.set(1711137150000, {"name":"ddd","email":"ddd@ddd.com"})
+    users.set(1711137166343, {"name":"eee","email":"eee@eee.com"})
+
+    updateUsersList()
+
+    function registerOrUpdateUser(id=null) {
         var name = document.getElementById("name").value;
         var email = document.getElementById("email").value;
         var password = document.getElementById("password").value;
@@ -85,50 +98,55 @@
         }
 
         // Adicionar usuário ao array com ID único
-        var user = {
-            id: userIdCounter++,
-            name: name,
-            email: email
-        };
-        users.push(user);
+        var user = {name, email}
 
-        // Atualizar a lista de usuários cadastrados
-        updateUsersList();
+        if(id){
+            users.set(id, user) //PUT '/api/produto'
+        }else{
+            users.set(Date.now(), user) //POST '/api/produto'
+        }
 
+        
         // Limpar campos após o cadastro
         document.getElementById("userForm").reset();
         document.getElementById("message").innerText = "Usuário cadastrado com sucesso.";
+        
+        // Atualizar a lista de usuários cadastrados
+        updateUsersList();
     }
 
     function updateUsersList() {
         var userListElement = document.getElementById("userList");
         userListElement.innerHTML = ""; // Limpar a lista antes de atualizar
 
+        //GIF de carregando
+        //GET '/api/produto'
+        
         // Adicionar cada usuário à lista
-        users.forEach(function(user, index) {
+        users.forEach(function(user, id) {
             var listItem = document.createElement("li");
-            listItem.className = "list-group-item d-flex justify-content-between align-items-center";
-            listItem.textContent = user.id + " - " + user.name + " - " + user.email;
+            listItem.className = "list-group-item d-flex justify-content-between align-items-center mb-3 row";
+            listItem.innerHTML = "Id:" + id + "<br>Nome: " + user.name + "<br>Email: " + user.email;
 
             var buttonsDiv = document.createElement("div");
-            buttonsDiv.className = "btn-group";
+            buttonsDiv.className = "btn-group h-100 col-2";
 
             var editButton = document.createElement("button");
-            editButton.className = "btn btn-secondary btn-sm";
+            editButton.className = "btn btn-secondary listItemEdit";
             editButton.textContent = "Alterar";
             editButton.onclick = function() {
-                editUser(index);
+                editUser(id);
             };
 
-            var deleteButton = document.createElement("button");
-            deleteButton.className = "btn btn-danger btn-sm";
-            deleteButton.textContent = "Excluir";
-            deleteButton.onclick = function() {
-                deleteUser(index, user.name);
-            };
+            // var deleteButton = document.createElement("button");
+            // deleteButton.className = "btn btn-danger btn-sm";
+            // deleteButton.textContent = "Excluir";
+            // deleteButton.onclick = function() {
+            //     deleteUser(id, user.name);
+            // };
 
             buttonsDiv.appendChild(editButton);
-            buttonsDiv.appendChild(deleteButton);
+            // buttonsDiv.appendChild(deleteButton);
 
             listItem.appendChild(buttonsDiv);
 
@@ -136,16 +154,18 @@
         });
     }
 
-    function editUser(index) {
-        var user = users[index];
-        document.getElementById("id").value = user.id;
-        document.getElementById("name").value = user.name;
-        document.getElementById("email").value = user.email;
+    function editUser(id) {
+        const user = users.get(id)
+        document.getElementById("id").value = id
+        document.getElementById("name").value = user.name
+        document.getElementById("email").value = user.email
 
         // Esconder botão "Cadastrar" e mostrar botões "Salvar" e "Cancelar"
-        document.getElementById("buttons").classList.add("d-none");
-        document.getElementById("saveButton").classList.remove("d-none");
-        document.getElementById("cancelButton").classList.remove("d-none");
+        document.getElementById("bt_newUser").classList.add("d-none");
+        document.getElementById("bt_saveUser").classList.remove("d-none");
+        document.getElementById("bt_cancel").classList.remove("d-none");
+        document.getElementById("bt_deleteUser").classList.remove("d-none");
+        $('.listItemEdit').addClass('d-none')
     }
 
     function saveUser() {
@@ -177,15 +197,21 @@
         // Limpar campos e mostrar botão "Cadastrar"
         document.getElementById("userForm").reset();
         document.getElementById("message").innerText = "";
-        document.getElementById("buttons").classList.remove("d-none");
-        document.getElementById("saveButton").classList.add("d-none");
-        document.getElementById("cancelButton").classList.add("d-none");
+
+        document.getElementById("bt_newUser").classList.remove("d-none");
+        document.getElementById("bt_saveUser").classList.add("d-none");
+        document.getElementById("bt_cancel").classList.add("d-none");
+        document.getElementById("bt_deleteUser").classList.add("d-none");
+        $('.listItemEdit').removeClass('d-none')
     }
 
-    function deleteUser(index, name) {
+    function deleteUser() {
+        const id = document.getElementById("id").value
+        const name = document.getElementById("name").value
         if (confirm("Tem certeza que deseja excluir o usuário '" + name + "'?")) {
-            users.splice(index, 1);
-            updateUsersList();
+            users.delete(id)
+            updateUsersList()
+            cancelEdit()
         }
     }
 </script>
@@ -194,3 +220,4 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
+
